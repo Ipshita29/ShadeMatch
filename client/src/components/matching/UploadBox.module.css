@@ -23,6 +23,8 @@
 
 .hasPreview {
   padding: var(--space-4);
+  min-height: 0;
+  align-items: stretch;
 }
 
 .iconCircle {
@@ -86,33 +88,122 @@
 }
 
 .previewWrap {
-  position: relative;
   width: 100%;
-  border-radius: var(--radius-md);
-  overflow: hidden;
 }
 
 .preview {
   width: 100%;
-  max-height: 420px;
+  max-height: 220px;
   object-fit: cover;
   border-radius: var(--radius-md);
+  margin-bottom: var(--space-4);
 }
 
-.replaceButton {
-  position: absolute;
-  bottom: var(--space-3);
-  right: var(--space-3);
-  padding: 9px 18px;
+.meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  flex-wrap: wrap;
+  text-align: left;
+}
+
+.metaText {
+  min-width: 0;
+}
+
+.fileName {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+  word-break: break-word;
+}
+
+.fileSize {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+.successNote {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--sage-muted);
+  margin-top: var(--space-2);
+}
+
+.metaActions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  flex-shrink: 0;
+}
+
+.changeButton {
+  padding: 10px 18px;
   border-radius: var(--radius-sm);
-  background: rgba(23, 19, 21, 0.75);
+  background: transparent;
   border: 1px solid var(--border-strong);
-  color: var(--cream);
+  color: var(--text-secondary);
   font-size: 13px;
   font-weight: 600;
-  backdrop-filter: blur(4px);
+  transition:
+    border-color 0.2s ease,
+    color 0.2s ease;
 }
 
-.replaceButton:hover {
+.changeButton:hover:not(:disabled) {
   border-color: var(--rose);
+  color: var(--rose);
+}
+
+.continueButton {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 10px 22px;
+  border-radius: var(--radius-sm);
+  background: var(--accent);
+  color: var(--accent-text);
+  border: none;
+  font-size: 13px;
+  font-weight: 600;
+  transition: background-color 0.2s ease;
+}
+
+.continueButton:hover:not(:disabled) {
+  background: var(--accent-hover);
+}
+
+.changeButton:disabled,
+.continueButton:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.spinner {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 2px solid rgba(23, 19, 21, 0.35);
+  border-top-color: var(--accent-text);
+  animation: spin 0.7s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.error {
+  margin-top: var(--space-3);
+  padding: 12px 16px;
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(185, 130, 145, 0.4);
+  background: rgba(185, 130, 145, 0.08);
+  color: var(--rose);
+  font-size: 13px;
 }

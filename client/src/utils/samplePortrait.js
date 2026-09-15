@@ -25,3 +25,27 @@ const SAMPLE_PORTRAIT_SVG = `
 export function getSamplePortrait() {
   return `data:image/svg+xml;utf8,${encodeURIComponent(SAMPLE_PORTRAIT_SVG)}`;
 }
+
+// Rasterizes the sample portrait into a real PNG File so it can flow through
+// the same client-side validation and upload pipeline as a real photo.
+export function getSamplePortraitFile() {
+  return new Promise((resolve, reject) => {
+    const image = new Image();
+    image.onload = () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = image.width;
+      canvas.height = image.height;
+      const context = canvas.getContext('2d');
+      context.drawImage(image, 0, 0);
+      canvas.toBlob((blob) => {
+        if (!blob) {
+          reject(new Error('Could not prepare the sample photo.'));
+          return;
+        }
+        resolve(new File([blob], 'sample-client-photo.png', { type: 'image/png' }));
+      }, 'image/png');
+    };
+    image.onerror = () => reject(new Error('Could not load the sample photo.'));
+    image.src = getSamplePortrait();
+  });
+}

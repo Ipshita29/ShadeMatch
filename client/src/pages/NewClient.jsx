@@ -1,32 +1,76 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import StepIndicator from '../components/matching/StepIndicator'
 import UploadBox from '../components/matching/UploadBox'
-import Button from '../components/common/Button'
-import { getSamplePortrait } from '../utils/samplePortrait'
+import { getSamplePortraitFile } from '../utils/samplePortrait'
+import { uploadClientPhoto, createClient } from '../services/clientService'
 import styles from './NewClient.module.css'
+
+const requirements = [
+  'Face clearly visible',
+  'Natural or evenly lit light',
+  'No heavy filters',
+  'Minimal/no foundation',
+]
 
 function NewClient() {
   const navigate = useNavigate()
   const [file, setFile] = useState(null)
-  const [usingSample, setUsingSample] = useState(false)
+  const [status, setStatus] = useState('idle') // 'idle' | 'uploading' | 'success'
+  const [error, setError] = useState(null)
+  const [uploadedPhoto, setUploadedPhoto] = useState(null) // { url, publicId, clientId }
 
-  // The preview is carried forward via router state into the Skin Analysis
-  // page, so the object URL is intentionally not revoked on unmount here.
-  const previewUrl = useMemo(() => {
-    if (usingSample) return getSamplePortrait()
-    if (file) return URL.createObjectURL(file)
-    return null
-  }, [file, usingSample])
+  const previewUrl = useMemo(() => (file ? URL.createObjectURL(file) : null), [file])
+
+  // Release the local preview URL whenever it changes or the page unmounts.
+  useEffect(() => {
+    return () => {
+      if (previewUrl) URL.revokeObjectURL(previewUrl)
+    }
+  }, [previewUrl])
 
   const handleFileSelected = (selectedFile) => {
-    setUsingSample(false)
+    setError(null)
+    setStatus('idle')
+    setUploadedPhoto(null)
     setFile(selectedFile)
   }
 
-  const handleUseSample = () => {
-    setFile(null)
-    setUsingSample(true)
+  const handleValidationError = (message) => {
+    setError(message)
+  }
+
+  const handleUseSample = async () => {
+    try {
+      const sampleFile = await getSamplePortraitFile()
+      handleFileSelected(sampleFile)
+    } catch {
+      setError('Could not load the sample photo. Please try again.')
+    }
+  }
+
+  const handleContinue = async () => {
+    if (status === 'success' && uploadedPhoto) {
+      navigate('/clients/new/analysis', {
+        state: { previewUrl: uploadedPhoto.url, clientId: uploadedPhoto.clientId },
+      })
+      return
+    }
+
+    if (!file || status === 'uploading') return
+
+    setStatus('uploading')
+    setError(null)
+
+    try {
+      const uploaded = await uploadClientPhoto(file)
+      const client = await createClient({ photoUrl: uploaded.url, photoPublicId: uploaded.publicId })
+      setUploadedPhoto({ ...uploaded, clientId: client._id })
+      setStatus('success')
+    } catch (uploadError) {
+      setError(uploadError.message)
+      setStatus('idle')
+    }
   }
 
   return (
@@ -36,42 +80,55 @@ function NewClient() {
 
       <div className={styles.layout}>
         <div className={styles.uploadColumn}>
-          <UploadBox onFileSelected={handleFileSelected} previewUrl={previewUrl} />
+          <UploadBox
+            file={file}
+            previewUrl={previewUrl}
+            status={status}
+            errorMessage={error}
+            onFileSelected={handleFileSelected}
+            onError={handleValidationError}
+            onContinue={handleContinue}
+          />
 
-          {!previewUrl && (
+          {!file && (
             <button type="button" className={styles.sampleLink} onClick={handleUseSample}>
               Don&rsquo;t have a photo handy? Use a sample client photo
             </button>
           )}
 
           <p className={styles.privacy}>
-            Client photos are used only to generate a skin profile for this session and
-            are never shared outside your studio account.
+            ShadeMatch uses the image only to assist with shade estimation. Only upload
+            photos you have permission to use.
           </p>
         </div>
 
         <aside className={styles.sidebar}>
-          <h2 className={styles.sidebarTitle}>Tips for best results</h2>
+          <h2 className={styles.sidebarTitle}>Before you upload</h2>
           <ul className={styles.tips}>
-            <li>Natural daylight, ideally indirect and facing a window.</li>
-            <li>Bare or minimal makeup on the area being analyzed.</li>
-            <li>No filters, beauty modes or heavy color correction.</li>
-            <li>Neutral background where possible.</li>
+            {requirements.map((item) => (
+              <li key={item}>
+                <CheckIcon /> {item}
+              </li>
+            ))}
           </ul>
         </aside>
       </div>
-
-      <div className={styles.actions}>
-        <Button
-          size="lg"
-          disabled={!previewUrl}
-          onClick={() => navigate('/clients/new/analysis', { state: { previewUrl } })}
-        >
-          Continue to Skin Profile
-        </Button>
-        {usingSample && <span className={styles.sampleNote}>Using sample photo</span>}
-      </div>
     </div>
+  )
+}
+
+function CheckIcon() {
+  return (
+    <svg viewBox="0 0 20 20" width="14" height="14" fill="none" aria-hidden="true">
+      <circle cx="10" cy="10" r="9" stroke="currentColor" strokeWidth="1.4" />
+      <path
+        d="M6 10.2l2.4 2.4L14 7.4"
+        stroke="currentColor"
+        strokeWidth="1.6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
   )
 }
 
