@@ -4,7 +4,7 @@ import styles from './ClientCard.module.css'
 
 function ClientCard({ client }) {
   return (
-    <Link to="/clients/new/analysis" className={styles.card}>
+    <Link to="/clients/new" className={styles.card}>
       <span className={styles.avatar} aria-hidden="true">
         {initials(client.name)}
       </span>

@@ -206,9 +206,3 @@ export const demoMatchScenario = {
       'NC40 sits closest to Amara\'s measured depth and warm-golden undertone, with the smallest overall color distance among the shades in MAC Studio Fix Fluid. NC42 runs slightly deeper and NC37 slightly lighter, both retaining the same warm family.',
   },
 };
-
-export const analysisReasons = [
-  'Depth is estimated from average luminance across multiple facial regions in even, natural light.',
-  'Undertone is derived from the balance of red, yellow and blue tones beneath the surface skin color.',
-  'Hue family is cross-checked against a reference range of common foundation shade families.',
-];

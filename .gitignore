@@ -27,6 +27,9 @@ venv/
 env/
 *.egg-info/
 
+# Downloaded ML model weights (fetched on first use, not committed)
+ml-service/.cache/
+
 # Misc
 coverage/
 .eslintcache

@@ -22,8 +22,8 @@ function ClientRow({ client }) {
       </td>
       <td className={styles.date}>{formatDate(client.lastAnalyzed)}</td>
       <td className={styles.action}>
-        <Button variant="ghost" size="sm" to="/clients/new/analysis">
-          View profile
+        <Button variant="ghost" size="sm" to="/clients/new">
+          New match
         </Button>
       </td>
     </tr>

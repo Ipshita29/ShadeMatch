@@ -19,10 +19,23 @@ export async function uploadClientPhoto(file) {
   }
 }
 
-// Creates the client record that Part 4 will attach a skin profile to.
+// Creates the client record that Part 4 attaches a skin-region analysis to.
 export async function createClient({ name, photoUrl, photoPublicId }) {
   try {
     const { data } = await api.post('/clients', { name, photoUrl, photoPublicId })
+    return data.data
+  } catch (error) {
+    throw new Error(extractErrorMessage(error), { cause: error })
+  }
+}
+
+// Triggers Part 4 face detection + skin-region extraction for a client and
+// resolves with the raw analysis result (regions, representative color,
+// quality flags). Does not yet produce a classified skin profile — that's
+// Part 5.
+export async function analyzeSkinRegions(clientId) {
+  try {
+    const { data } = await api.post(`/clients/${clientId}/analyze-skin-regions`)
     return data.data
   } catch (error) {
     throw new Error(extractErrorMessage(error), { cause: error })

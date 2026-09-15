@@ -185,17 +185,22 @@ service is a separate Python runtime and is run independently with the
 
 ## Current development status
 
-**Part 1 — Project Setup & Architecture: complete.**
+**Parts 1–4 complete.**
 
-The three services exist, are independently runnable, and expose working
-health checks. No skin detection, matching, or AI logic has been built yet —
-that starts in later parts.
+- **Part 1 — Project Setup & Architecture.** The three services exist, are
+  independently runnable, and expose working health checks.
+- **Part 2 — UI/UX.** The full client-facing flow (landing, auth, dashboard,
+  client/foundation/match pages) is built against mock data with the final
+  dark editorial design system.
+- **Part 3 — Client Photo Upload.** Real photo upload (Multer → Cloudinary)
+  and a minimal `Client` record in MongoDB, wired to the "New Client" page.
+- **Part 4 — Skin Detection & Region Extraction.** The ML service detects a
+  face (MediaPipe) in an uploaded photo and samples forehead/cheek pixels
+  into RGB/Lab color statistics. No undertone, depth, hue or final skin
+  profile yet — see `ml-service/README.md` for the pipeline details.
 
 ### Upcoming parts
 
-- **Part 2** — UI/UX
-- **Part 3** — Client Photo Upload
-- **Part 4** — Skin Detection & Extraction
 - **Part 5** — Skin Profile Engine
 - **Part 6** — Foundation Shade Database
 - **Part 7** — Matching Engine

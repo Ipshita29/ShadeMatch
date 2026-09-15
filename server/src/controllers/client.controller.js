@@ -1,5 +1,7 @@
+const mongoose = require('mongoose');
 const Client = require('../models/Client');
 const cloudinaryService = require('../services/cloudinaryService');
+const mlService = require('../services/mlService');
 
 async function uploadClientPhoto(req, res, next) {
   try {
@@ -43,4 +45,36 @@ async function createClient(req, res, next) {
   }
 }
 
-module.exports = { uploadClientPhoto, createClient };
+async function analyzeSkinRegions(req, res, next) {
+  try {
+    const { clientId } = req.params;
+
+    if (!mongoose.isValidObjectId(clientId)) {
+      const error = new Error('Invalid client id.');
+      error.status = 400;
+      throw error;
+    }
+
+    const client = await Client.findById(clientId);
+    if (!client) {
+      const error = new Error('Client not found.');
+      error.status = 404;
+      throw error;
+    }
+
+    const analysis = await mlService.analyzeSkinRegions(client.photoUrl);
+
+    client.lastSkinAnalysis = analysis;
+    await client.save();
+
+    res.json({
+      success: true,
+      message: 'Skin regions analyzed successfully',
+      data: analysis,
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
+module.exports = { uploadClientPhoto, createClient, analyzeSkinRegions };

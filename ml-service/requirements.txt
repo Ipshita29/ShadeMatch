@@ -6,3 +6,4 @@ mediapipe
 numpy
 pillow
 scikit-learn
+requests
