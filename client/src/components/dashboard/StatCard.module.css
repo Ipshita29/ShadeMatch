@@ -1,0 +1,16 @@
+.stat {
+  padding: var(--space-5) 0;
+  border-top: 1px solid var(--border);
+}
+
+.value {
+  font-family: var(--font-serif);
+  font-size: 32px;
+  color: var(--text-primary);
+}
+
+.label {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin-top: var(--space-1);
+}

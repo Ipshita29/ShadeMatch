@@ -1,0 +1,72 @@
+.title {
+  font-size: clamp(26px, 3vw, 34px);
+}
+
+.subtitle {
+  color: var(--text-secondary);
+  margin-top: var(--space-2);
+  margin-bottom: var(--space-6);
+}
+
+.profileBar {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: var(--space-6);
+  padding: var(--space-5) var(--space-6);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  margin-bottom: var(--space-7);
+}
+
+.productTag {
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.productLabel {
+  display: block;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+}
+
+.productName {
+  display: block;
+  font-family: var(--font-serif);
+  font-size: 17px;
+  color: var(--text-primary);
+  margin-top: 4px;
+}
+
+.topWrap {
+  margin-bottom: var(--space-8);
+}
+
+.secondaryHeading {
+  font-size: 20px;
+  margin-bottom: var(--space-4);
+}
+
+.secondaryGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--space-4);
+}
+
+@media (max-width: 767px) {
+  .profileBar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .productTag {
+    text-align: left;
+  }
+
+  .secondaryGrid {
+    grid-template-columns: 1fr;
+  }
+}

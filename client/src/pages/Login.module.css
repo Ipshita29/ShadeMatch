@@ -1,0 +1,131 @@
+.page {
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: 1.1fr 1fr;
+}
+
+.visual {
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(165deg, #3a252d 0%, var(--burgundy) 45%, var(--espresso) 100%);
+  display: flex;
+  align-items: flex-end;
+  padding: var(--space-8);
+}
+
+.visualGlow {
+  position: absolute;
+  width: 420px;
+  height: 420px;
+  border-radius: 50%;
+  top: -120px;
+  left: -100px;
+  background: radial-gradient(circle, rgba(185, 130, 145, 0.3), transparent 70%);
+}
+
+.visualQuote {
+  position: relative;
+  z-index: 1;
+  max-width: 420px;
+}
+
+.visualQuote p {
+  font-family: var(--font-serif);
+  font-size: 26px;
+  line-height: 1.4;
+  color: var(--cream);
+  font-style: italic;
+}
+
+.visualQuote span {
+  display: block;
+  margin-top: var(--space-4);
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--rose);
+}
+
+.formSide {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-6);
+}
+
+.formWrap {
+  width: 100%;
+  max-width: 380px;
+}
+
+.title {
+  font-size: 34px;
+  margin: var(--space-6) 0 var(--space-2);
+}
+
+.subtitle {
+  color: var(--text-secondary);
+  margin-bottom: var(--space-7);
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.label {
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.input {
+  padding: 13px 16px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-strong);
+  background: var(--surface);
+  color: var(--text-primary);
+  font-size: 15px;
+}
+
+.input::placeholder {
+  color: var(--text-muted);
+}
+
+.input:focus-visible {
+  border-color: var(--rose);
+}
+
+.submit {
+  width: 100%;
+  margin-top: var(--space-2);
+}
+
+.footerText {
+  margin-top: var(--space-6);
+  font-size: 14px;
+  color: var(--text-muted);
+  text-align: center;
+}
+
+.footerText a {
+  color: var(--rose);
+  font-weight: 600;
+}
+
+@media (max-width: 900px) {
+  .page {
+    grid-template-columns: 1fr;
+  }
+
+  .visual {
+    min-height: 220px;
+    align-items: center;
+  }
+}

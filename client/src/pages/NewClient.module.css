@@ -1,0 +1,89 @@
+.title {
+  font-size: clamp(26px, 3vw, 34px);
+  margin-bottom: var(--space-6);
+}
+
+.layout {
+  display: grid;
+  grid-template-columns: 1.6fr 1fr;
+  gap: var(--space-7);
+  align-items: start;
+}
+
+.uploadColumn {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.sampleLink {
+  align-self: center;
+  background: none;
+  border: none;
+  color: var(--rose);
+  font-size: 13px;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.privacy {
+  font-size: 13px;
+  color: var(--text-muted);
+  text-align: center;
+}
+
+.sidebar {
+  padding: var(--space-5);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+}
+
+.sidebarTitle {
+  font-family: var(--font-serif);
+  font-size: 18px;
+  margin-bottom: var(--space-4);
+}
+
+.tips {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.tips li {
+  position: relative;
+  padding-left: var(--space-4);
+  font-size: 14px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+.tips li::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 8px;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--rose);
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  margin-top: var(--space-7);
+}
+
+.sampleNote {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+@media (max-width: 900px) {
+  .layout {
+    grid-template-columns: 1fr;
+  }
+}

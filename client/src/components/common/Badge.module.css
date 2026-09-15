@@ -1,0 +1,37 @@
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  border: 1px solid transparent;
+  white-space: nowrap;
+}
+
+.neutral {
+  background: rgba(242, 233, 225, 0.08);
+  color: var(--text-secondary);
+  border-color: var(--border);
+}
+
+.rose {
+  background: rgba(185, 130, 145, 0.14);
+  color: var(--rose);
+  border-color: rgba(185, 130, 145, 0.3);
+}
+
+.sage {
+  background: rgba(82, 100, 95, 0.22);
+  color: #b9ccc5;
+  border-color: rgba(82, 100, 95, 0.4);
+}
+
+.outline {
+  background: transparent;
+  color: var(--text-muted);
+  border-color: var(--border-strong);
+}

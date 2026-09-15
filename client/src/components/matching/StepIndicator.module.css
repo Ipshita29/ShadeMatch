@@ -1,0 +1,38 @@
+.list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-6);
+  padding-bottom: var(--space-6);
+  margin-bottom: var(--space-6);
+  border-bottom: 1px solid var(--border);
+}
+
+.step {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--text-muted);
+}
+
+.number {
+  font-family: var(--font-serif);
+  font-size: 14px;
+}
+
+.label {
+  font-size: 13px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.current {
+  color: var(--rose);
+}
+
+.done {
+  color: var(--text-secondary);
+}
+
+.done .number {
+  color: var(--sage-muted);
+}

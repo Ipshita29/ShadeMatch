@@ -1,0 +1,118 @@
+.box {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: var(--space-2);
+  padding: var(--space-9) var(--space-6);
+  border: 1.5px dashed var(--border-strong);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  transition:
+    border-color 0.2s ease,
+    background-color 0.2s ease;
+  min-height: 340px;
+}
+
+.box.dragging {
+  border-color: var(--rose);
+  background: rgba(185, 130, 145, 0.06);
+}
+
+.hasPreview {
+  padding: var(--space-4);
+}
+
+.iconCircle {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--rose);
+  background: rgba(185, 130, 145, 0.1);
+  margin-bottom: var(--space-2);
+}
+
+.iconCircle svg {
+  width: 24px;
+  height: 24px;
+}
+
+.title {
+  font-family: var(--font-serif);
+  font-size: 22px;
+  color: var(--text-primary);
+}
+
+.hint {
+  max-width: 38ch;
+  font-size: 14px;
+  color: var(--text-muted);
+}
+
+.dragText {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin-top: var(--space-3);
+}
+
+.chooseButton {
+  margin-top: var(--space-3);
+  padding: 12px 28px;
+  border-radius: var(--radius-sm);
+  background: var(--accent);
+  color: var(--accent-text);
+  border: none;
+  font-weight: 600;
+  font-size: 14px;
+  transition: background-color 0.2s ease;
+}
+
+.chooseButton:hover {
+  background: var(--accent-hover);
+}
+
+.hiddenInput {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  pointer-events: none;
+  width: 1px;
+  height: 1px;
+}
+
+.previewWrap {
+  position: relative;
+  width: 100%;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+
+.preview {
+  width: 100%;
+  max-height: 420px;
+  object-fit: cover;
+  border-radius: var(--radius-md);
+}
+
+.replaceButton {
+  position: absolute;
+  bottom: var(--space-3);
+  right: var(--space-3);
+  padding: 9px 18px;
+  border-radius: var(--radius-sm);
+  background: rgba(23, 19, 21, 0.75);
+  border: 1px solid var(--border-strong);
+  color: var(--cream);
+  font-size: 13px;
+  font-weight: 600;
+  backdrop-filter: blur(4px);
+}
+
+.replaceButton:hover {
+  border-color: var(--rose);
+}

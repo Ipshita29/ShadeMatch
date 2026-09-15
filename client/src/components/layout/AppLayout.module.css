@@ -1,0 +1,36 @@
+.shell {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.body {
+  display: flex;
+  flex: 1;
+}
+
+.main {
+  flex: 1;
+  min-width: 0;
+}
+
+.content {
+  max-width: var(--content-max);
+  margin: 0 auto;
+  padding: var(--space-6) var(--space-6) var(--space-9);
+}
+
+.scrim {
+  position: fixed;
+  inset: var(--navbar-height) 0 0 0;
+  background: rgba(0, 0, 0, 0.5);
+  border: none;
+  z-index: 30;
+  cursor: default;
+}
+
+@media (max-width: 767px) {
+  .content {
+    padding: var(--space-5) var(--space-4) var(--space-8);
+  }
+}

@@ -1,0 +1,41 @@
+.panel {
+  width: 100%;
+}
+
+.eyebrow {
+  font-family: var(--font-serif);
+  font-size: 22px;
+  color: var(--text-primary);
+  margin-bottom: var(--space-5);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-5) var(--space-6);
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.fieldLabel {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+}
+
+.fieldValue {
+  font-size: 15px;
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+@media (max-width: 520px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+}

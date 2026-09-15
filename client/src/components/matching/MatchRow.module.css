@@ -1,0 +1,41 @@
+.row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-4) 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.row:last-child {
+  border-bottom: none;
+}
+
+.body {
+  flex: 1;
+  min-width: 0;
+}
+
+.product {
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+.shade {
+  font-family: var(--font-serif);
+  font-size: 17px;
+  color: var(--text-primary);
+  margin-top: 2px;
+}
+
+.client {
+  font-family: var(--font-sans);
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.score {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--rose);
+  white-space: nowrap;
+}

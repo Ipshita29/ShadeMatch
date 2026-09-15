@@ -1,0 +1,38 @@
+.wrap {
+  max-width: 640px;
+}
+
+.wrap.center {
+  max-width: 640px;
+  margin-left: auto;
+  margin-right: auto;
+  text-align: center;
+}
+
+.eyebrow {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--rose);
+  margin-bottom: var(--space-3);
+}
+
+.title {
+  font-size: clamp(28px, 3.4vw, 42px);
+  line-height: 1.15;
+  color: var(--text-primary);
+}
+
+.subtitle {
+  margin-top: var(--space-4);
+  font-size: 16px;
+  line-height: 1.65;
+  color: var(--text-secondary);
+  max-width: 52ch;
+}
+
+.center .subtitle {
+  margin-left: auto;
+  margin-right: auto;
+}
