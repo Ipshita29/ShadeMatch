@@ -1,0 +1,14 @@
+{
+  "name": "shadematch",
+  "private": true,
+  "version": "0.1.0",
+  "description": "ShadeMatch monorepo — AI-assisted foundation shade matching for makeup artists",
+  "scripts": {
+    "dev:client": "npm run dev --prefix client",
+    "dev:server": "npm run dev --prefix server",
+    "dev": "concurrently -n client,server -c blue,green \"npm:dev:client\" \"npm:dev:server\""
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.4"
+  }
+}
