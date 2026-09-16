@@ -6,11 +6,14 @@ detection, skin profile generation, and foundation shade matching logic.
 
 ## Status
 
-Part 4 — face detection and skin-region extraction. Given a client photo URL,
-the service detects the face, samples pixels from the forehead and both
-cheeks, filters out obvious non-skin outliers, and returns RGB/Lab color
-statistics per region. It does **not** yet classify undertone, depth, hue or
-produce a final skin profile — that's Part 5.
+Part 5 — skin profile engine. Given a client photo URL, the service detects
+the face (Part 4), samples/filters pixels from the forehead and both cheeks,
+and now also converts those measurements into a structured skin profile:
+depth, undertone, hue, a representative Lab/RGB color, and heuristic
+confidence/quality indicators (Part 5). This is a transparent CIE Lab
+color-science heuristic, documented and configurable — **not** a trained ML
+model (see "Scientific limitations" below) — and it does **not** yet touch
+foundation shades or matching, which are Part 6/7.
 
 ## Setup
 
@@ -57,8 +60,10 @@ docker run --rm -p 8000:8000 -e CLIENT_URL=http://localhost:5173 shadematch-ml-s
 ## Endpoints
 
 - `GET /health` — service health check
-- `POST /analyze/skin-regions` — face detection + skin-region pixel
+- `POST /analyze/skin-regions` — Part 4: face detection + skin-region pixel
   extraction (see below)
+- `POST /analyze/skin-profile` — Part 5: the same extraction, converted into
+  a structured skin profile (see below)
 
 ### `POST /analyze/skin-regions`
 
@@ -102,6 +107,34 @@ raw Python traceback:
 | 502 | The image URL couldn't be downloaded |
 | 500 | Unexpected internal error (logged server-side, not shown to the client) |
 
+### `POST /analyze/skin-profile`
+
+Same request body as `/analyze/skin-regions` (`imageUrl`, optional `debug`).
+Runs the identical Part 4 extraction internally, then classifies it.
+
+**Success response (200):**
+
+```json
+{
+  "success": true,
+  "data": {
+    "profile": { "depth": "Medium Deep", "undertone": "Warm", "hue": "Golden" },
+    "representativeColor": {
+      "rgb": { "r": 146, "g": 105, "b": 84 },
+      "lab": { "l": 54.2, "a": 14.7, "b": 23.8 }
+    },
+    "confidence": { "overall": 0.87, "depth": 0.93, "undertone": 0.81, "hue": 0.84 },
+    "quality": { "usable": true, "regionalConsistency": 0.86 }
+  }
+}
+```
+
+When `quality.usable` is `false`, a `quality.reason` string explains why
+(e.g. `"Image lighting may affect color estimation."`) — the frontend shows
+this instead of a profile and asks for a better photo. Same error status
+codes as `/analyze/skin-regions` apply (this endpoint fails the same way
+Part 4 does if the face/image itself is the problem).
+
 ## How it works
 
 1. **Download & validate** (`app/utils/image_utils.py`) — fetches the image,
@@ -141,6 +174,58 @@ raw Python traceback:
    relative to the image, and how many pixels actually survived filtering
    per region (a locally over/under-exposed region can look fine on a
    whole-image average but still yield almost no usable samples).
+7. **Skin profile** (`app/services/skin_profile.py`, Part 5) — takes the
+   Part 4 output above and:
+   - Aggregates the three regions' Lab **medians** into one representative
+     color, weighted by `REGION_WEIGHTS` in `app/core/config.py` (cheeks
+     weighted slightly higher — most relevant to foundation application —
+     but renormalized across whichever regions actually had enough pixels).
+   - Classifies **depth** from L* against `DEPTH_THRESHOLDS`, **undertone**
+     from the b*/a* ratio against `UNDERTONE_WARM_RATIO`/`UNDERTONE_COOL_RATIO`,
+     and **hue** (a more cosmetic Rosy/Golden/Olive/Neutral label) from the
+     same axes plus an explicit desaturated-olive check. Every threshold is
+     an **initial MVP calibration value** — see the "Scientific limitations"
+     note in `skin_profile.py` and the comment block in `config.py`.
+   - Computes **regional consistency**: how much the three regions agree
+     with each other in the a*/b* chroma plane — not classification
+     accuracy, just measurement agreement. Below a threshold, undertone/hue
+     fall back to an explicit uncertain state rather than guessing.
+   - Computes heuristic **confidence** per classification (distance from the
+     nearest decision boundary) and an overall score that also factors in
+     regional consistency, Part 4's image-quality flags, and how many
+     regions were usable. These are reliability scores, not validated model
+     probabilities — the frontend maps them to "High"/"Moderate"/"Low"
+     bands, never a raw percentage.
+   - Each classifier (`estimate_depth`, `estimate_undertone`, `estimate_hue`)
+     is a small pure function — `Lab in, (label, confidence) out` — so any
+     one of them can later be swapped for a trained model without touching
+     the API response shape or the frontend.
+
+## Testing
+
+```bash
+source venv/bin/activate
+pytest tests/ -v
+```
+
+`tests/fixtures/skin_profile_fixtures.py` has synthetic (not real-person)
+Lab/RGB inputs for depth/undertone/hue boundaries, ambiguous cases,
+inconsistent regions, low pixel counts and poor-quality photos, so the
+classification logic in `skin_profile.py` can be exercised without
+repeatedly uploading real photos.
+
+## Scientific limitations
+
+Photographic skin-color estimation is affected by ambient lighting, camera
+white balance, exposure, shadows, highlights, makeup, skincare products,
+filters and image compression. **This system is an assistive estimation
+tool** — it is not exact skin-tone detection, not 100% accurate, and not an
+objective measurement of anyone's "true" skin color. Depth/undertone/hue
+categories are internal organizational buckets for foundation shade ranges,
+derived only from this image's measured pixel colors — never from ethnicity,
+nationality, race or any other demographic assumption. Physical shade
+testing in person, under suitable lighting, should always precede a final
+foundation decision.
 
 ## Folder structure
 
@@ -149,20 +234,25 @@ ml-service/
 ├── app/
 │   ├── api/
 │   │   ├── health.py
-│   │   └── skin.py            # POST /analyze/skin-regions
+│   │   └── skin.py            # POST /analyze/skin-regions, /analyze/skin-profile
 │   ├── core/
-│   │   └── config.py
+│   │   └── config.py          # all Part 4 + Part 5 calibration constants
 │   ├── models/
-│   │   └── skin.py            # request schema
+│   │   ├── skin.py            # request schema
+│   │   └── skin_profile.py    # Part 5 response schema
 │   ├── services/
 │   │   ├── face_detector.py
 │   │   ├── skin_region_extractor.py
 │   │   ├── pixel_sampler.py
-│   │   └── image_quality.py
+│   │   ├── image_quality.py
+│   │   └── skin_profile.py    # Part 5 classification engine
 │   ├── utils/
 │   │   ├── image_utils.py
 │   │   └── color_utils.py
 │   └── main.py
+├── tests/
+│   ├── fixtures/skin_profile_fixtures.py
+│   └── test_skin_profile.py
 ├── Dockerfile
 ├── requirements.txt
 └── .env.example

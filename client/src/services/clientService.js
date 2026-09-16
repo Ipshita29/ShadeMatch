@@ -29,13 +29,13 @@ export async function createClient({ name, photoUrl, photoPublicId }) {
   }
 }
 
-// Triggers Part 4 face detection + skin-region extraction for a client and
-// resolves with the raw analysis result (regions, representative color,
-// quality flags). Does not yet produce a classified skin profile — that's
-// Part 5.
-export async function analyzeSkinRegions(clientId) {
+// Triggers the full Part 4 + Part 5 pipeline for a client (face detection,
+// skin-region extraction, then classification) and resolves with the
+// structured skin profile: depth, undertone, hue, representative color,
+// confidence and quality/usability flags.
+export async function analyzeSkin(clientId) {
   try {
-    const { data } = await api.post(`/clients/${clientId}/analyze-skin-regions`)
+    const { data } = await api.post(`/clients/${clientId}/analyze-skin`)
     return data.data
   } catch (error) {
     throw new Error(extractErrorMessage(error), { cause: error })

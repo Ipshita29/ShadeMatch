@@ -185,7 +185,7 @@ service is a separate Python runtime and is run independently with the
 
 ## Current development status
 
-**Parts 1–4 complete.**
+**Parts 1–5 complete.**
 
 - **Part 1 — Project Setup & Architecture.** The three services exist, are
   independently runnable, and expose working health checks.
@@ -196,12 +196,15 @@ service is a separate Python runtime and is run independently with the
   and a minimal `Client` record in MongoDB, wired to the "New Client" page.
 - **Part 4 — Skin Detection & Region Extraction.** The ML service detects a
   face (MediaPipe) in an uploaded photo and samples forehead/cheek pixels
-  into RGB/Lab color statistics. No undertone, depth, hue or final skin
-  profile yet — see `ml-service/README.md` for the pipeline details.
+  into RGB/Lab color statistics.
+- **Part 5 — Skin Profile Engine.** The Part 4 measurements are converted
+  into a structured, documented color-science heuristic profile — depth,
+  undertone, hue, a representative Lab/RGB color, and heuristic confidence
+  — with no foundation matching yet. See `ml-service/README.md` for the
+  classification logic and its documented scientific limitations.
 
 ### Upcoming parts
 
-- **Part 5** — Skin Profile Engine
 - **Part 6** — Foundation Shade Database
 - **Part 7** — Matching Engine
 - **Part 8** — Results & Comparison

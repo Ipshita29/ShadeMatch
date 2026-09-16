@@ -2,10 +2,10 @@
 // (stable since Node 18) rather than adding an HTTP client dependency.
 const ML_SERVICE_URL = process.env.ML_SERVICE_URL || 'http://localhost:8000';
 
-async function analyzeSkinRegions(imageUrl) {
+async function callMlService(path, imageUrl) {
   let response;
   try {
-    response = await fetch(`${ML_SERVICE_URL}/analyze/skin-regions`, {
+    response = await fetch(`${ML_SERVICE_URL}${path}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       // debug:true asks the ML service for an annotated preview image so
@@ -30,4 +30,16 @@ async function analyzeSkinRegions(imageUrl) {
   return payload.data;
 }
 
-module.exports = { analyzeSkinRegions };
+// Part 4 — face detection + raw region pixel/color measurements.
+function analyzeSkinRegions(imageUrl) {
+  return callMlService('/analyze/skin-regions', imageUrl);
+}
+
+// Part 5 — structured skin profile (depth/undertone/hue/confidence) built
+// on top of the same Part 4 extraction. All classification logic lives in
+// the ML service — Node only forwards the request and result.
+function analyzeSkinProfile(imageUrl) {
+  return callMlService('/analyze/skin-profile', imageUrl);
+}
+
+module.exports = { analyzeSkinRegions, analyzeSkinProfile };

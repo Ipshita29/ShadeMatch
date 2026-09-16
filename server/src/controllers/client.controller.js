@@ -45,26 +45,38 @@ async function createClient(req, res, next) {
   }
 }
 
+async function findClientOrThrow(clientId) {
+  if (!mongoose.isValidObjectId(clientId)) {
+    const error = new Error('Invalid client id.');
+    error.status = 400;
+    throw error;
+  }
+
+  const client = await Client.findById(clientId);
+  if (!client) {
+    const error = new Error('Client not found.');
+    error.status = 404;
+    throw error;
+  }
+
+  return client;
+}
+
+// The ML service's optional debug field is a base64-encoded JPEG (tens of
+// KB) — useful in the API response but not worth bloating every cached
+// Mongo document with, so it's stripped before persisting.
+function withoutDebug(data) {
+  const { debug, ...rest } = data;
+  return rest;
+}
+
 async function analyzeSkinRegions(req, res, next) {
   try {
-    const { clientId } = req.params;
-
-    if (!mongoose.isValidObjectId(clientId)) {
-      const error = new Error('Invalid client id.');
-      error.status = 400;
-      throw error;
-    }
-
-    const client = await Client.findById(clientId);
-    if (!client) {
-      const error = new Error('Client not found.');
-      error.status = 404;
-      throw error;
-    }
+    const client = await findClientOrThrow(req.params.clientId);
 
     const analysis = await mlService.analyzeSkinRegions(client.photoUrl);
 
-    client.lastSkinAnalysis = analysis;
+    client.lastSkinAnalysis = withoutDebug(analysis);
     await client.save();
 
     res.json({
@@ -77,4 +89,26 @@ async function analyzeSkinRegions(req, res, next) {
   }
 }
 
-module.exports = { uploadClientPhoto, createClient, analyzeSkinRegions };
+async function analyzeSkin(req, res, next) {
+  try {
+    const client = await findClientOrThrow(req.params.clientId);
+
+    // Part 5: same Part 4 extraction under the hood, but the ML service
+    // returns a classified profile instead of raw region measurements. No
+    // classification logic is duplicated here — Node only forwards.
+    const profile = await mlService.analyzeSkinProfile(client.photoUrl);
+
+    client.lastSkinProfile = withoutDebug(profile);
+    await client.save();
+
+    res.json({
+      success: true,
+      message: 'Skin profile generated successfully',
+      data: profile,
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
+module.exports = { uploadClientPhoto, createClient, analyzeSkinRegions, analyzeSkin };

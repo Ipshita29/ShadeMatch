@@ -26,6 +26,21 @@ def rgb_to_lab(pixels_rgb: np.ndarray) -> np.ndarray:
     return lab
 
 
+def lab_to_rgb(lab_triple) -> np.ndarray:
+    """Inverse of rgb_to_lab for a single (L, a, b) triple in standard CIE
+    Lab ranges. Returns a (3,) uint8 RGB array. Used to render a Lab color
+    computed by aggregation (which isn't itself the Lab of any one pixel)
+    back into a displayable RGB swatch."""
+    l_value, a_value, b_value = lab_triple
+    opencv_lab = np.array(
+        [[[l_value * (255.0 / 100.0), a_value + 128.0, b_value + 128.0]]],
+        dtype=np.float32,
+    )
+    opencv_lab = np.clip(opencv_lab, 0, 255).astype(np.uint8)
+    rgb = cv2.cvtColor(opencv_lab, cv2.COLOR_LAB2RGB)
+    return rgb[0, 0].astype(int)
+
+
 def rgb_to_hsv(pixels_rgb: np.ndarray) -> np.ndarray:
     """pixels_rgb: (N, 3) uint8 array. Returns (N, 3) float array — H in [0,360), S/V in [0,100]."""
     if pixels_rgb.size == 0:

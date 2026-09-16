@@ -2,13 +2,26 @@ import { useEffect, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import StepIndicator from '../components/matching/StepIndicator'
 import Button from '../components/common/Button'
-import { analyzeSkinRegions } from '../services/clientService'
+import Badge from '../components/common/Badge'
+import { analyzeSkin } from '../services/clientService'
 import styles from './SkinAnalysis.module.css'
 
-const QUALITY_WARNINGS = {
-  too_dark: 'This photo looks quite dark — results may be less reliable. Natural daylight works best.',
-  too_bright: 'This photo looks overexposed — results may be less reliable. Try softer, more even light.',
-  small: 'The face is quite small in this photo — try moving closer for a more reliable sample.',
+const ESTIMATION_POINTS = [
+  'Multiple facial regions analyzed',
+  'Color represented in CIE Lab',
+  'Regional measurements compared',
+  'Lighting/quality factors considered',
+]
+
+// Confidence is a heuristic reliability score (region agreement, distance
+// from classification boundaries, image quality) — never a validated
+// model probability, so it's shown as a qualitative band, never a raw
+// percentage. See ml-service/app/services/skin_profile.py for how it's
+// computed.
+function confidenceBand(overall) {
+  if (overall >= 0.75) return { label: 'High', tone: 'sage' }
+  if (overall >= 0.5) return { label: 'Moderate', tone: 'outline' }
+  return { label: 'Low', tone: 'rose' }
 }
 
 function SkinAnalysis() {
@@ -18,16 +31,16 @@ function SkinAnalysis() {
 
   const [status, setStatus] = useState(clientId ? 'loading' : 'missing')
   const [error, setError] = useState(null)
-  const [analysis, setAnalysis] = useState(null)
+  const [profile, setProfile] = useState(null)
 
   useEffect(() => {
     if (!clientId) return undefined
     let cancelled = false
 
-    analyzeSkinRegions(clientId)
+    analyzeSkin(clientId)
       .then((data) => {
         if (cancelled) return
-        setAnalysis(data)
+        setProfile(data)
         setStatus('success')
       })
       .catch((analysisError) => {
@@ -70,12 +83,15 @@ function SkinAnalysis() {
         <div className={styles.profileColumn}>
           {status === 'loading' && <LoadingPanel />}
           {status === 'error' && <ErrorPanel message={error} />}
-          {status === 'success' && (
+          {status === 'success' && !profile.quality?.usable && (
+            <NeedsBetterPhotoPanel reason={profile.quality?.reason} />
+          )}
+          {status === 'success' && profile.quality?.usable && (
             <ResultPanel
-              analysis={analysis}
+              profile={profile}
               onContinue={() =>
                 navigate('/clients/new/foundation', {
-                  state: { clientId, previewUrl, skinAnalysis: analysis },
+                  state: { clientId, previewUrl, skinProfile: profile },
                 })
               }
             />
@@ -104,54 +120,89 @@ function ErrorPanel({ message }) {
   )
 }
 
-function ResultPanel({ analysis, onContinue }) {
-  const warningKey =
-    analysis.quality?.brightness === 'too_dark'
-      ? 'too_dark'
-      : analysis.quality?.brightness === 'too_bright'
-        ? 'too_bright'
-        : analysis.quality?.faceSize === 'small'
-          ? 'small'
-          : null
+function NeedsBetterPhotoPanel({ reason }) {
+  return (
+    <div className={styles.statusCard}>
+      <p className={styles.resultHeadline}>Profile needs a better photo</p>
+      <p className={styles.errorText}>
+        {reason || 'The lighting or facial-region measurements were inconsistent.'}
+      </p>
+      <Button to="/clients/new">Upload a clearer photo</Button>
+    </div>
+  )
+}
+
+function ResultPanel({ profile, onContinue }) {
+  const [showDetails, setShowDetails] = useState(false)
+  const { depth, undertone, hue } = profile.profile
+  const confidence = confidenceBand(profile.confidence.overall)
 
   return (
     <div>
-      <div className={`${styles.checklist} animate-in`}>
-        <p className={styles.checkItem}>
-          <CheckIcon /> Face detected
-        </p>
-        <p className={styles.checkItem}>
-          <CheckIcon /> Skin regions identified
-        </p>
+      <p className={styles.eyebrow}>Skin Profile</p>
+
+      <div className={`${styles.profileGrid} animate-in`}>
+        <div className={styles.profileField}>
+          <p className={styles.fieldLabel}>Depth</p>
+          <p className={styles.fieldValue}>{depth}</p>
+        </div>
+        <div className={styles.profileField}>
+          <p className={styles.fieldLabel}>Undertone</p>
+          <Badge tone="sage">{undertone}</Badge>
+        </div>
+        <div className={styles.profileField}>
+          <p className={styles.fieldLabel}>Hue</p>
+          <Badge tone="rose">{hue}</Badge>
+        </div>
+        <div className={styles.profileField}>
+          <p className={styles.fieldLabel}>Confidence</p>
+          <Badge tone={confidence.tone}>{confidence.label}</Badge>
+        </div>
       </div>
 
-      <p className={styles.resultHeadline}>Skin regions successfully detected.</p>
       <p className={styles.resultBody}>
-        We sampled your client&rsquo;s forehead and both cheeks, avoiding eyes, lips,
-        hair and shadowed areas, to prepare a representative skin color sample.
+        Your profile is estimated from color measurements across multiple facial
+        regions.
       </p>
 
-      {warningKey && <p className={styles.qualityWarning}>{QUALITY_WARNINGS[warningKey]}</p>}
-
-      {analysis.debug?.annotatedImageBase64 && (
+      {profile.debug?.annotatedImageBase64 && (
         <div className={styles.debugWrap}>
           <p className={styles.debugLabel}>Detected regions (development preview)</p>
           <img
-            src={analysis.debug.annotatedImageBase64}
+            src={profile.debug.annotatedImageBase64}
             alt="Debug visualization of detected face and sampled skin regions"
             className={styles.debugImage}
           />
         </div>
       )}
 
+      <div className={styles.detailsWrap}>
+        <button
+          type="button"
+          className={styles.detailsToggle}
+          onClick={() => setShowDetails((open) => !open)}
+          aria-expanded={showDetails}
+        >
+          How was this estimated? <span aria-hidden="true">{showDetails ? '−' : '+'}</span>
+        </button>
+        {showDetails && (
+          <ul className={styles.detailsList}>
+            {ESTIMATION_POINTS.map((point) => (
+              <li key={point}>
+                <CheckIcon /> {point}
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+
       <p className={styles.disclaimer}>
-        ShadeMatch provides an assistive estimate. Lighting, camera settings and filters
-        all affect the result — final shade selection should always be verified on the
-        skin in suitable lighting.
+        ShadeMatch provides an assistive estimate. Final shade selection should
+        always be verified on the skin in suitable lighting.
       </p>
 
       <Button size="lg" onClick={onContinue}>
-        Continue to Skin Profile
+        Continue to Foundation
       </Button>
     </div>
   )
@@ -159,7 +210,7 @@ function ResultPanel({ analysis, onContinue }) {
 
 function CheckIcon() {
   return (
-    <svg viewBox="0 0 20 20" width="16" height="16" fill="none" aria-hidden="true">
+    <svg viewBox="0 0 20 20" width="14" height="14" fill="none" aria-hidden="true">
       <circle cx="10" cy="10" r="9" stroke="currentColor" strokeWidth="1.4" />
       <path
         d="M6 10.2l2.4 2.4L14 7.4"
