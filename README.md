@@ -185,7 +185,7 @@ service is a separate Python runtime and is run independently with the
 
 ## Current development status
 
-**Parts 1–5 complete.**
+**Parts 1–6 complete.**
 
 - **Part 1 — Project Setup & Architecture.** The three services exist, are
   independently runnable, and expose working health checks.
@@ -202,10 +202,19 @@ service is a separate Python runtime and is run independently with the
   undertone, hue, a representative Lab/RGB color, and heuristic confidence
   — with no foundation matching yet. See `ml-service/README.md` for the
   classification logic and its documented scientific limitations.
+- **Part 6 — Foundation Shade Database.** A real `Brand → FoundationProduct →
+  FoundationShade` MongoDB dataset (5 brands, 41 shades), seeded via
+  `npm run seed`, with a filterable/searchable/paginated REST API and the
+  Foundations page now reading real data instead of mock. Depth/undertone/hue
+  are derived from each shade's color using the same thresholds as Part 5, so
+  client profiles and foundation shades share one vocabulary. No matching/
+  ranking logic yet. Shade names/codes are real and publicly documented;
+  their RGB color values are ShadeMatch's own visual estimates (not lab
+  measurements or scraped brand data) and are explicitly marked
+  `calibration.status: "estimated"` — see `server/src/data/foundations/shades.js`.
 
 ### Upcoming parts
 
-- **Part 6** — Foundation Shade Database
 - **Part 7** — Matching Engine
 - **Part 8** — Results & Comparison
 - **Part 9** — AI + Shade Chart Upload
