@@ -4,6 +4,7 @@ import StepIndicator from '../components/matching/StepIndicator'
 import Button from '../components/common/Button'
 import Badge from '../components/common/Badge'
 import { analyzeSkin } from '../services/clientService'
+import { confidenceBand } from '../utils/confidence'
 import styles from './SkinAnalysis.module.css'
 
 const ESTIMATION_POINTS = [
@@ -12,17 +13,6 @@ const ESTIMATION_POINTS = [
   'Regional measurements compared',
   'Lighting/quality factors considered',
 ]
-
-// Confidence is a heuristic reliability score (region agreement, distance
-// from classification boundaries, image quality) — never a validated
-// model probability, so it's shown as a qualitative band, never a raw
-// percentage. See ml-service/app/services/skin_profile.py for how it's
-// computed.
-function confidenceBand(overall) {
-  if (overall >= 0.75) return { label: 'High', tone: 'sage' }
-  if (overall >= 0.5) return { label: 'Moderate', tone: 'outline' }
-  return { label: 'Low', tone: 'rose' }
-}
 
 function SkinAnalysis() {
   const navigate = useNavigate()

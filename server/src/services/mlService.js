@@ -2,7 +2,14 @@
 // (stable since Node 18) rather than adding an HTTP client dependency.
 const ML_SERVICE_URL = process.env.ML_SERVICE_URL || 'http://localhost:8000';
 
-async function postToMlService(path, body) {
+async function postToMlService(
+  path,
+  body,
+  {
+    unreachableMessage = 'Could not reach the skin analysis service. Please try again.',
+    failureMessage = 'Unable to analyze the photo. Please try again.',
+  } = {}
+) {
   let response;
   try {
     response = await fetch(`${ML_SERVICE_URL}${path}`, {
@@ -11,7 +18,7 @@ async function postToMlService(path, body) {
       body: JSON.stringify(body),
     });
   } catch {
-    const error = new Error('Could not reach the skin analysis service. Please try again.');
+    const error = new Error(unreachableMessage);
     error.status = 503;
     throw error;
   }
@@ -19,7 +26,7 @@ async function postToMlService(path, body) {
   const payload = await response.json().catch(() => null);
 
   if (!response.ok || !payload?.success) {
-    const error = new Error(payload?.error || 'Unable to analyze the photo. Please try again.');
+    const error = new Error(payload?.error || failureMessage);
     error.status = 422;
     throw error;
   }
@@ -47,7 +54,14 @@ function analyzeSkinProfile(imageUrl) {
 // the profile + shades from MongoDB and forwards them (see Part 7 spec:
 // the ML service never queries the database itself).
 function matchShades(skinProfile, shades) {
-  return postToMlService('/match', { skinProfile, shades });
+  return postToMlService(
+    '/match',
+    { skinProfile, shades },
+    {
+      unreachableMessage: 'We couldn’t complete the match right now. Please try again.',
+      failureMessage: 'We couldn’t complete the match right now. Please try again.',
+    }
+  );
 }
 
 module.exports = { analyzeSkinRegions, analyzeSkinProfile, matchShades };

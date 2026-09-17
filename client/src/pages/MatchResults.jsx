@@ -1,15 +1,62 @@
 import { useEffect, useState } from 'react'
-import { useLocation } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import StepIndicator from '../components/matching/StepIndicator'
-import Badge from '../components/common/Badge'
+import SectionHeading from '../components/common/SectionHeading'
 import Button from '../components/common/Button'
-import { TopMatchCard, SecondaryMatchCard } from '../components/matching/MatchCard'
+import { LoadingState, EmptyState, ErrorState } from '../components/common/StatusPanel'
+import SkinProfileCard from '../components/matching/SkinProfileCard'
+import { BestMatchCard, MatchResultCard } from '../components/matching/MatchCard'
+import ColorComparison from '../components/matching/ColorComparison'
+import MatchComparison from '../components/matching/MatchComparison'
 import { matchClient } from '../services/clientService'
 import styles from './MatchResults.module.css'
 
+// Known Part 7 validation/guard messages, mapped to friendlier copy and a
+// relevant next step. Anything not listed here falls back to a generic,
+// safe message — the raw backend string is never shown directly.
+function errorPanelFor(message, { foundationState }) {
+  const known = {
+    'Run skin analysis for this client before matching.': {
+      title: 'Skin profile not ready',
+      body: "Your skin profile hasn't been analyzed yet.",
+      actions: [{ label: 'Back to Skin Analysis', to: '/clients/new' }],
+    },
+    'Client not found.': {
+      title: 'Client not found',
+      body: "We couldn't find this client. They may have been removed.",
+      actions: [{ label: 'Start New Match', to: '/clients/new' }],
+    },
+    'Invalid client id.': {
+      title: 'Something went wrong',
+      body: "We couldn't load this client. Please start a new match.",
+      actions: [{ label: 'Start New Match', to: '/clients/new' }],
+    },
+    'Foundation product not found.': {
+      title: 'Product unavailable',
+      body: "This product doesn't have enough shade data to generate a match.",
+      actions: [{ label: 'Choose another product', to: '/clients/new/foundation', state: foundationState }],
+    },
+    'A valid productId is required.': {
+      title: 'No product selected',
+      body: 'Please choose a foundation product to match against.',
+      actions: [{ label: 'Choose a product', to: '/clients/new/foundation', state: foundationState }],
+    },
+  }
+
+  return (
+    known[message] || {
+      title: "We couldn't complete the match",
+      body: "We couldn't complete the match right now. Please try again.",
+      actions: null,
+    }
+  )
+}
+
 function MatchResults() {
+  const navigate = useNavigate()
   const location = useLocation()
-  const { clientId, skinProfile, productId } = location.state || {}
+  const { clientId, previewUrl, skinProfile, productId } = location.state || {}
+  const foundationState = { clientId, previewUrl, skinProfile }
 
   const [status, setStatus] = useState(clientId && productId ? 'loading' : 'missing')
   const [error, setError] = useState(null)
@@ -37,66 +84,67 @@ function MatchResults() {
     }
   }, [clientId, productId, retryKey])
 
+  const retry = () => {
+    setStatus('loading')
+    setRetryKey((k) => k + 1)
+  }
+
+  const goToComparison = () => {
+    navigate('/clients/new/compare', {
+      state: { clientId, previewUrl, skinProfile, productId, matches: result?.matches },
+    })
+  }
+
   if (status === 'missing') {
     return (
       <div>
-        <h1 className={styles.title}>Your closest matches</h1>
-        <div className={styles.statusCard}>
-          <p>Start a new match to see foundation shade results.</p>
-          <Button to="/clients/new">Start New Match</Button>
-        </div>
+        <h1 className={styles.title}>Foundation Match</h1>
+        <EmptyState
+          title="Start a new match"
+          body="Analyze a client's skin and choose a foundation to see matches here."
+          actions={[{ label: 'Start New Match', to: '/clients/new' }]}
+        />
       </div>
     )
   }
 
   return (
     <div>
-      <h1 className={styles.title}>Your closest matches</h1>
-      <p className={styles.subtitle}>
-        Based on the client&rsquo;s estimated profile and the selected foundation.
-      </p>
+      <h1 className={styles.title}>Foundation Match</h1>
+      <p className={styles.subtitle}>Here&rsquo;s what we found for your skin profile.</p>
 
       <StepIndicator current={4} />
 
       {skinProfile?.profile && (
-        <div className={styles.profileBar}>
-          <div className={styles.profileTags}>
-            <Badge tone="sage">{skinProfile.profile.undertone}</Badge>
-            <Badge tone="outline">{skinProfile.profile.depth}</Badge>
-            <Badge tone="rose">{skinProfile.profile.hue}</Badge>
-          </div>
-          <p className={styles.profileNote}>Estimated profile</p>
+        <div className={styles.profileWrap}>
+          <SkinProfileCard skinProfile={skinProfile} />
         </div>
       )}
 
-      {status === 'loading' && (
-        <div className={styles.statusCard}>
-          <span className={styles.spinner} aria-hidden="true" />
-          <p className={styles.statusText}>Finding the closest matches&hellip;</p>
-        </div>
-      )}
+      {status === 'loading' && <LoadingState />}
 
-      {status === 'error' && (
-        <div className={styles.statusCard}>
-          <p className={styles.errorText}>{error}</p>
-          <Button
-            variant="secondary"
-            onClick={() => {
-              setStatus('loading')
-              setRetryKey((k) => k + 1)
-            }}
-          >
-            Retry
-          </Button>
-        </div>
-      )}
+      {status === 'error' && <ErrorPanel message={error} foundationState={foundationState} onRetry={retry} />}
 
-      {status === 'success' && <ResultBody result={result} />}
+      {status === 'success' && (
+        <ResultBody
+          result={result}
+          skinProfile={skinProfile}
+          foundationState={foundationState}
+          onCompare={goToComparison}
+          navigate={navigate}
+        />
+      )}
     </div>
   )
 }
 
-function ResultBody({ result }) {
+function ErrorPanel({ message, foundationState, onRetry }) {
+  const panel = errorPanelFor(message, { foundationState })
+  const actions = panel.actions || [{ label: 'Try again', onClick: onRetry }]
+  return <ErrorState title={panel.title} body={panel.body} actions={actions} />
+}
+
+function ResultBody({ result, skinProfile, foundationState, onCompare, navigate }) {
   const { status, message, profileConfidence, matches } = result
 
   return (
@@ -109,37 +157,36 @@ function ResultBody({ result }) {
       )}
 
       {status === 'blocked' && (
-        <div className={styles.statusCard}>
-          <p className={styles.resultHeadline}>Photo needs improvement</p>
-          <p className={styles.errorText}>{message}</p>
-          <Button to="/clients/new">Upload a clearer photo</Button>
-        </div>
+        <ErrorState
+          title="Photo needs improvement"
+          body={message}
+          actions={[{ label: 'Upload a clearer photo', to: '/clients/new' }]}
+        />
       )}
 
       {status === 'no_candidates' && (
-        <div className={styles.statusCard}>
-          <p className={styles.resultHeadline}>No shades to compare</p>
-          <p className={styles.errorText}>{message}</p>
-          <Button to="/clients/new/foundation">Choose a different foundation</Button>
-        </div>
+        <EmptyState
+          title="No shades to compare"
+          body={message}
+          actions={[{ label: 'Choose another product', to: '/clients/new/foundation', state: foundationState }]}
+        />
       )}
 
       {status === 'low_confidence' && (
         <div>
           <div className={styles.lowConfidenceNotice}>
-            <p className={styles.resultHeadline}>No close match found</p>
+            <p className={styles.resultHeadline}>No strong match found</p>
             <p className={styles.lowConfidenceBody}>
-              The available shades in this foundation range differ significantly from the
-              estimated client profile.
+              We couldn&rsquo;t find a close enough shade in this product range.
             </p>
           </div>
 
           {matches.length > 0 && (
             <>
-              <h2 className={styles.secondaryHeading}>Closest available shades</h2>
+              <SectionHeading title="Closest available shades" className={styles.sectionHeading} />
               <div className={styles.lowConfidenceGrid}>
                 {matches.map((match, index) => (
-                  <SecondaryMatchCard key={match.shadeId} match={match} rank={index + 1} />
+                  <MatchResultCard key={match.shadeId} match={match} rank={index + 1} />
                 ))}
               </div>
             </>
@@ -149,8 +196,15 @@ function ResultBody({ result }) {
 
       {status === 'ok' && matches.length > 0 && (
         <>
+          <SectionHeading
+            eyebrow="Top Foundation Matches"
+            title="Your closest matches"
+            subtitle="Based on color, depth, undertone and hue."
+            className={styles.sectionHeading}
+          />
+
           <div className={styles.topWrap}>
-            <TopMatchCard match={matches[0]} />
+            <BestMatchCard match={matches[0]} onCompare={onCompare} />
           </div>
 
           {matches.length > 1 && (
@@ -158,13 +212,42 @@ function ResultBody({ result }) {
               <h2 className={styles.secondaryHeading}>Other close matches</h2>
               <div className={styles.secondaryGrid}>
                 {matches.slice(1).map((match, index) => (
-                  <SecondaryMatchCard key={match.shadeId} match={match} rank={index + 2} />
+                  <MatchResultCard key={match.shadeId} match={match} rank={index + 2} />
                 ))}
               </div>
             </>
           )}
+
+          <SectionHeading
+            title="Compare Top Matches"
+            subtitle="A side-by-side comparison of the recommended shades."
+            className={styles.sectionHeading}
+          />
+          <MatchComparison matches={matches} />
         </>
       )}
+
+      {(status === 'ok' || status === 'low_confidence') && matches.length > 0 && (
+        <>
+          <SectionHeading title="Color Comparison" className={styles.sectionHeading} />
+          <ColorComparison
+            clientRgb={skinProfile?.representativeColor?.rgb}
+            shadeRgb={matches[0].color?.rgb}
+            deltaE={matches[0].deltaE}
+            shadeName={matches[0].name}
+          />
+        </>
+      )}
+
+      <div className={styles.footer}>
+        <Button
+          variant="secondary"
+          onClick={() => navigate('/clients/new/foundation', { state: foundationState })}
+        >
+          Try another foundation
+        </Button>
+        <Button onClick={() => navigate('/clients/new')}>Analyze another client</Button>
+      </div>
 
       <p className={styles.disclaimer}>
         ShadeMatch provides an assistive recommendation based on available color data, not a

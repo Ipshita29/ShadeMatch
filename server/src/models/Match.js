@@ -32,6 +32,11 @@ const matchSchema = new mongoose.Schema(
         },
         deltaE: Number,
         reasons: [String],
+        calibration: {
+          status: String,
+          confidence: Number,
+          colorSource: String,
+        },
       },
     ],
   },

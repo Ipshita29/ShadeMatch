@@ -197,15 +197,28 @@ async function matchClient(req, res, next) {
 
     const result = await mlService.matchShades(toMatchProfilePayload(client.lastSkinProfile), shadesPayload);
 
-    const shadeIdByString = new Map(shadeDocs.map((shade) => [String(shade._id), shade._id]));
+    const shadeDocById = new Map(shadeDocs.map((shade) => [String(shade._id), shade]));
+
+    // The ml-service's match result doesn't carry calibration.status through
+    // (it only returns the numeric calibration *score* baked into
+    // breakdown.calibration) — Node already has the full shade docs from
+    // the query above, so it attaches the raw status here for the UI's
+    // "Calibrated / Digital shade data" transparency labels. This is a
+    // response-shaping addition, not a change to how matches are scored.
+    const matchesWithCalibration = result.matches.map((match) => ({
+      ...match,
+      calibration: shadeDocById.get(match.shadeId)?.calibration,
+    }));
+    const responseData = { ...result, matches: matchesWithCalibration };
+
     await Match.create({
       client: client._id,
       product: product._id,
       status: result.status,
       profileConfidence: result.profileConfidence,
       message: result.message,
-      matches: result.matches.map((match) => ({
-        shade: shadeIdByString.get(match.shadeId),
+      matches: matchesWithCalibration.map((match) => ({
+        shade: shadeDocById.get(match.shadeId)?._id,
         name: match.name,
         code: match.code,
         brandName: match.brandName,
@@ -214,13 +227,14 @@ async function matchClient(req, res, next) {
         breakdown: match.breakdown,
         deltaE: match.deltaE,
         reasons: match.reasons,
+        calibration: match.calibration,
       })),
     });
 
     res.json({
       success: true,
       message: 'Matches calculated successfully',
-      data: result,
+      data: responseData,
     });
   } catch (error) {
     next(error);

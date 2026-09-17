@@ -164,35 +164,3 @@ export const mockMatches = [
     date: '2026-08-29',
   },
 ];
-
-// Used on the Match Results / Shade Comparison pages as the demo scenario.
-export const demoMatchScenario = {
-  client: {
-    name: 'Amara Osei',
-    photo: null,
-  },
-  skinProfile: skinProfiles.amara,
-  brand: 'MAC',
-  product: 'Studio Fix Fluid',
-  topMatch: {
-    shade: 'NC40',
-    hex: '#B87950',
-    matchScore: 94,
-    undertone: 'Warm',
-    depth: 'Medium Deep',
-    checks: ['Depth match', 'Undertone match', 'Closest color profile'],
-  },
-  otherMatches: [
-    { rank: 2, shade: 'NC42', hex: '#AD6F49', matchScore: 89, undertone: 'Warm', depth: 'Medium Deep' },
-    { rank: 3, shade: 'NC37', hex: '#C6885F', matchScore: 83, undertone: 'Warm', depth: 'Medium' },
-  ],
-  comparison: {
-    shades: [
-      { shade: 'NC40', hex: '#B87950', color: 96, depth: true, undertone: true, hue: true, overall: 94 },
-      { shade: 'NC42', hex: '#AD6F49', color: 91, depth: true, undertone: true, hue: 'partial', overall: 89 },
-      { shade: 'NC37', hex: '#C6885F', color: 84, depth: 'partial', undertone: 'partial', hue: 'partial', overall: 83 },
-    ],
-    explanation:
-      'NC40 sits closest to Amara\'s measured depth and warm-golden undertone, with the smallest overall color distance among the shades in MAC Studio Fix Fluid. NC42 runs slightly deeper and NC37 slightly lighter, both retaining the same warm family.',
-  },
-};

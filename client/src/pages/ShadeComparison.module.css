@@ -27,6 +27,10 @@
   margin-bottom: var(--space-7);
 }
 
+.colorWrap {
+  margin-top: var(--space-7);
+}
+
 .explanation {
   margin-top: var(--space-7);
   padding: var(--space-7);
