@@ -41,3 +41,15 @@ export async function analyzeSkin(clientId) {
     throw new Error(extractErrorMessage(error), { cause: error })
   }
 }
+
+// Part 7 — scores a foundation product's shades against the client's skin
+// profile and resolves with { status, message, profileConfidence, matches }.
+// All scoring happens server-side (Node -> ML service); this just calls it.
+export async function matchClient(clientId, productId) {
+  try {
+    const { data } = await api.post(`/clients/${clientId}/match`, { productId })
+    return data.data
+  } catch (error) {
+    throw new Error(extractErrorMessage(error), { cause: error })
+  }
+}

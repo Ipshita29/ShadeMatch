@@ -60,16 +60,6 @@ export const mockClients = [
   },
 ];
 
-export const mockBrands = ['MAC', 'Maybelline', 'NARS', 'Fenty Beauty', 'Estée Lauder'];
-
-export const mockProducts = [
-  { id: 'p1', brand: 'MAC', name: 'Studio Fix Fluid', shadeCount: 67 },
-  { id: 'p2', brand: 'Maybelline', name: 'Fit Me Matte + Poreless', shadeCount: 40 },
-  { id: 'p3', brand: 'NARS', name: 'Light Reflecting', shadeCount: 36 },
-  { id: 'p4', brand: 'Fenty Beauty', name: 'Pro Filt\'r Soft Matte', shadeCount: 50 },
-  { id: 'p5', brand: 'Estée Lauder', name: 'Double Wear', shadeCount: 56 },
-];
-
 // Shade libraries keyed by product id. Hex values approximate real
 // foundation-shade tones spanning depth and undertone ranges.
 export const mockShades = {

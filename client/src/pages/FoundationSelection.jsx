@@ -1,36 +1,88 @@
-import { useMemo, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useEffect, useState } from 'react'
+import { useLocation, useNavigate } from 'react-router-dom'
 import StepIndicator from '../components/matching/StepIndicator'
 import ShadeGridItem from '../components/foundations/ShadeGridItem'
 import Button from '../components/common/Button'
-import { mockBrands, mockProducts, mockShades } from '../utils/mockData'
+import { getBrands, getFoundations, getShades } from '../services/foundationService'
 import styles from './FoundationSelection.module.css'
 
 function FoundationSelection() {
   const navigate = useNavigate()
-  const [brand, setBrand] = useState(mockBrands[0])
-  const productsForBrand = useMemo(
-    () => mockProducts.filter((product) => product.brand === brand),
-    [brand]
-  )
-  const [productId, setProductId] = useState(productsForBrand[0]?.id)
-  const [selectedShadeId, setSelectedShadeId] = useState(null)
+  const location = useLocation()
+  const { clientId, previewUrl, skinProfile } = location.state || {}
+
+  const [brands, setBrands] = useState([])
+  const [brandName, setBrandName] = useState('')
+  const [products, setProducts] = useState([])
+  const [productId, setProductId] = useState('')
+  const [shades, setShades] = useState([])
+
+  // Load brands once.
+  useEffect(() => {
+    getBrands()
+      .then((data) => {
+        setBrands(data)
+        if (data.length) setBrandName(data[0].name)
+      })
+      .catch(() => setBrands([]))
+  }, [])
+
+  // Load products whenever the selected brand changes.
+  useEffect(() => {
+    if (!brandName) return undefined
+    let cancelled = false
+
+    getFoundations({ brand: brandName })
+      .then((data) => {
+        if (cancelled) return
+        setProducts(data)
+        setProductId(data[0]?._id || '')
+      })
+      .catch(() => {
+        if (!cancelled) setProducts([])
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [brandName])
+
+  const selectedProduct = products.find((product) => product._id === productId)
+
+  // Load a shade preview whenever the selected product changes.
+  useEffect(() => {
+    const product = products.find((p) => p._id === productId)
+    if (!product) return undefined
+    let cancelled = false
+
+    getShades({ brand: brandName, product: product.name, limit: 60 })
+      .then((response) => {
+        if (!cancelled) setShades(response.data)
+      })
+      .catch(() => {
+        if (!cancelled) setShades([])
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [productId, brandName, products])
 
   const handleBrandChange = (event) => {
-    const nextBrand = event.target.value
-    setBrand(nextBrand)
-    const firstProduct = mockProducts.find((product) => product.brand === nextBrand)
-    setProductId(firstProduct?.id)
-    setSelectedShadeId(null)
+    setBrandName(event.target.value)
   }
 
-  const handleProductChange = (event) => {
-    setProductId(event.target.value)
-    setSelectedShadeId(null)
+  if (!clientId) {
+    return (
+      <div>
+        <h1 className={styles.title}>Choose a foundation</h1>
+        <div className={styles.missingCard}>
+          <p>Start a new match to choose a foundation to match against.</p>
+          <Button to="/clients/new">Start New Match</Button>
+        </div>
+      </div>
+    )
   }
-
-  const product = mockProducts.find((item) => item.id === productId)
-  const shades = mockShades[productId] || []
 
   return (
     <div>
@@ -42,10 +94,10 @@ function FoundationSelection() {
       <div className={styles.selectors}>
         <label className={styles.field}>
           <span className={styles.label}>Brand</span>
-          <select className={styles.select} value={brand} onChange={handleBrandChange}>
-            {mockBrands.map((brandOption) => (
-              <option key={brandOption} value={brandOption}>
-                {brandOption}
+          <select className={styles.select} value={brandName} onChange={handleBrandChange}>
+            {brands.map((brand) => (
+              <option key={brand._id} value={brand.name}>
+                {brand.name}
               </option>
             ))}
           </select>
@@ -53,10 +105,10 @@ function FoundationSelection() {
 
         <label className={styles.field}>
           <span className={styles.label}>Product</span>
-          <select className={styles.select} value={productId} onChange={handleProductChange}>
-            {productsForBrand.map((productOption) => (
-              <option key={productOption.id} value={productOption.id}>
-                {productOption.name}
+          <select className={styles.select} value={productId} onChange={(e) => setProductId(e.target.value)}>
+            {products.map((product) => (
+              <option key={product._id} value={product._id}>
+                {product.name}
               </option>
             ))}
           </select>
@@ -64,16 +116,19 @@ function FoundationSelection() {
       </div>
 
       <div className={styles.shadeHeader}>
-        <p className={styles.shadeCount}>{product?.shadeCount} shades available</p>
+        <p className={styles.shadeCount}>
+          {selectedProduct ? `${selectedProduct.shadeCount} shades available` : 'Loading shades…'}
+        </p>
       </div>
 
       <div className={styles.shadeGrid}>
         {shades.map((shade) => (
           <ShadeGridItem
-            key={shade.id}
-            shade={shade}
-            selected={selectedShadeId === shade.id}
-            onSelect={(selected) => setSelectedShadeId(selected.id)}
+            key={shade._id}
+            shade={{
+              ...shade,
+              hex: shade.color?.rgb ? `rgb(${shade.color.rgb.r}, ${shade.color.rgb.g}, ${shade.color.rgb.b})` : undefined,
+            }}
           />
         ))}
       </div>
@@ -88,14 +143,14 @@ function FoundationSelection() {
 
         <Button
           size="lg"
-          disabled={!selectedShadeId}
+          disabled={!productId}
           onClick={() =>
             navigate('/clients/new/results', {
-              state: { brand, product: product?.name, shadeId: selectedShadeId },
+              state: { clientId, previewUrl, skinProfile, productId },
             })
           }
         >
-          Continue to Matches
+          Find Matches
         </Button>
       </div>
     </div>

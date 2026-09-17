@@ -6,5 +6,6 @@ mediapipe
 numpy
 pillow
 scikit-learn
+scikit-image
 requests
 pytest

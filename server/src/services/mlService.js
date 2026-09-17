@@ -2,16 +2,13 @@
 // (stable since Node 18) rather than adding an HTTP client dependency.
 const ML_SERVICE_URL = process.env.ML_SERVICE_URL || 'http://localhost:8000';
 
-async function callMlService(path, imageUrl) {
+async function postToMlService(path, body) {
   let response;
   try {
     response = await fetch(`${ML_SERVICE_URL}${path}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      // debug:true asks the ML service for an annotated preview image so
-      // the artist can see which regions were sampled — small extra cost,
-      // not required by the core pipeline.
-      body: JSON.stringify({ imageUrl, debug: true }),
+      body: JSON.stringify(body),
     });
   } catch {
     const error = new Error('Could not reach the skin analysis service. Please try again.');
@@ -32,14 +29,25 @@ async function callMlService(path, imageUrl) {
 
 // Part 4 — face detection + raw region pixel/color measurements.
 function analyzeSkinRegions(imageUrl) {
-  return callMlService('/analyze/skin-regions', imageUrl);
+  // debug:true asks the ML service for an annotated preview image so the
+  // artist can see which regions were sampled — small extra cost, not
+  // required by the core pipeline.
+  return postToMlService('/analyze/skin-regions', { imageUrl, debug: true });
 }
 
 // Part 5 — structured skin profile (depth/undertone/hue/confidence) built
 // on top of the same Part 4 extraction. All classification logic lives in
 // the ML service — Node only forwards the request and result.
 function analyzeSkinProfile(imageUrl) {
-  return callMlService('/analyze/skin-profile', imageUrl);
+  return postToMlService('/analyze/skin-profile', { imageUrl, debug: true });
 }
 
-module.exports = { analyzeSkinRegions, analyzeSkinProfile };
+// Part 7 — scores a set of foundation shades against a client's skin
+// profile. All matching math lives in the ML service; Node only retrieves
+// the profile + shades from MongoDB and forwards them (see Part 7 spec:
+// the ML service never queries the database itself).
+function matchShades(skinProfile, shades) {
+  return postToMlService('/match', { skinProfile, shades });
+}
+
+module.exports = { analyzeSkinRegions, analyzeSkinProfile, matchShades };
