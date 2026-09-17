@@ -10,6 +10,17 @@ function UploadBox({
   onFileSelected,
   onError,
   onContinue,
+  title = 'Upload a client photo',
+  hint = 'Best results come from natural daylight, minimal makeup and no filters.',
+  previewAlt = 'Selected client photo preview',
+  uploadingLabel = 'Uploading photo…',
+  successLabel = 'Photo uploaded',
+  idleLabel = 'Continue',
+  continueLabel: continueLabelProp = 'Continue to Skin Profile',
+  fieldLabel = 'Upload client photo',
+  chooseLabel = 'Choose Photo',
+  changeLabel = 'Change Photo',
+  filePlaceholderName = 'client-photo',
 }) {
   const [isDragging, setIsDragging] = useState(false)
   const inputRef = useRef(null)
@@ -37,12 +48,7 @@ function UploadBox({
     handleFiles(event.dataTransfer.files)
   }
 
-  const continueLabel =
-    status === 'success'
-      ? 'Continue to Skin Profile'
-      : status === 'uploading'
-        ? 'Uploading photo…'
-        : 'Continue'
+  const continueLabel = status === 'success' ? continueLabelProp : status === 'uploading' ? uploadingLabel : idleLabel
 
   return (
     <div>
@@ -57,15 +63,15 @@ function UploadBox({
       >
         {previewUrl ? (
           <div className={styles.previewWrap}>
-            <img src={previewUrl} alt="Selected client photo preview" className={styles.preview} />
+            <img src={previewUrl} alt={previewAlt} className={styles.preview} />
 
             <div className={styles.meta}>
               <div className={styles.metaText}>
-                <p className={styles.fileName}>{file?.name || 'client-photo'}</p>
+                <p className={styles.fileName}>{file?.name || filePlaceholderName}</p>
                 {file && <p className={styles.fileSize}>{formatFileSize(file.size)}</p>}
                 {status === 'success' && (
                   <p className={styles.successNote}>
-                    <CheckIcon /> Photo uploaded
+                    <CheckIcon /> {successLabel}
                   </p>
                 )}
               </div>
@@ -77,7 +83,7 @@ function UploadBox({
                   onClick={() => inputRef.current?.click()}
                   disabled={isUploading}
                 >
-                  Change Photo
+                  {changeLabel}
                 </button>
                 <button
                   type="button"
@@ -99,13 +105,11 @@ function UploadBox({
                 <path d="M4 16v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
             </span>
-            <p className={styles.title}>Upload a client photo</p>
-            <p className={styles.hint}>
-              Best results come from natural daylight, minimal makeup and no filters.
-            </p>
+            <p className={styles.title}>{title}</p>
+            <p className={styles.hint}>{hint}</p>
             <p className={styles.dragText}>Drag &amp; drop your image here, or</p>
             <button type="button" className={styles.chooseButton} onClick={() => inputRef.current?.click()}>
-              Choose Photo
+              {chooseLabel}
             </button>
           </>
         )}
@@ -120,7 +124,7 @@ function UploadBox({
             // Allow re-selecting the same file after an error or change.
             event.target.value = ''
           }}
-          aria-label="Upload client photo"
+          aria-label={fieldLabel}
         />
       </div>
 

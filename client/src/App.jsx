@@ -10,6 +10,7 @@ import MatchResults from './pages/MatchResults'
 import ShadeComparison from './pages/ShadeComparison'
 import Foundations from './pages/Foundations'
 import FoundationShadeDetail from './pages/FoundationShadeDetail'
+import FoundationImport from './pages/FoundationImport'
 import Clients from './pages/Clients'
 import Matches from './pages/Matches'
 
@@ -29,6 +30,7 @@ function App() {
           <Route path="/clients/new/results" element={<MatchResults />} />
           <Route path="/clients/new/compare" element={<ShadeComparison />} />
           <Route path="/foundations" element={<Foundations />} />
+          <Route path="/foundations/import" element={<FoundationImport />} />
           <Route path="/foundations/shades/:shadeId" element={<FoundationShadeDetail />} />
           <Route path="/matches" element={<Matches />} />
         </Route>

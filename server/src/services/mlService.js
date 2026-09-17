@@ -64,4 +64,19 @@ function matchShades(skinProfile, shades) {
   );
 }
 
-module.exports = { analyzeSkinRegions, analyzeSkinProfile, matchShades };
+// Part 9 — pure computer-vision swatch color estimation for an uploaded
+// shade chart image. Deliberately separate from the AI/vision label
+// extraction call (see services/aiExtractionService.js): this only ever
+// samples pixels, it has no idea what a shade's name is.
+function extractSwatchColors(imageUrl) {
+  return postToMlService(
+    '/shade-chart/extract-colors',
+    { imageUrl },
+    {
+      unreachableMessage: 'We couldn’t read the colors on this shade chart right now. Please try again.',
+      failureMessage: 'We couldn’t read the colors on this shade chart right now. Please try again.',
+    }
+  );
+}
+
+module.exports = { analyzeSkinRegions, analyzeSkinProfile, matchShades, extractSwatchColors };

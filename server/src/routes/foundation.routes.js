@@ -1,4 +1,5 @@
 const express = require('express');
+const upload = require('../middleware/upload');
 const {
   listFoundations,
   listBrands,
@@ -8,6 +9,7 @@ const {
   getShadeById,
   searchFoundations,
 } = require('../controllers/foundation.controller');
+const { importChart, importShades } = require('../controllers/foundationImport.controller');
 
 const router = express.Router();
 
@@ -19,6 +21,13 @@ router.get('/brands', listBrands);
 router.get('/products/:productId', getProductById);
 router.get('/shades/:shadeId', getShadeById);
 router.get('/shades', listShades);
+
+// Part 9 — shade chart import. /import-chart returns a reviewable draft
+// only; /import-shades is the separate, explicit confirmation that writes
+// to MongoDB (see foundationImport.controller.js).
+router.post('/import-chart', upload.single('chart'), importChart);
+router.post('/import-shades', importShades);
+
 router.get('/', listFoundations);
 
 module.exports = router;

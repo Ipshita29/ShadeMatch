@@ -29,6 +29,11 @@ const COLOR_SOURCE_VALUES = [
   'calibrated_photo',
   'artist_sample',
   'estimated',
+  // Part 9 — a swatch color sampled by the shade-chart CV pipeline from an
+  // uploaded chart image. Distinct from 'estimated' (a manually-chosen
+  // visual approximation, e.g. the Part 6 seed data) because this one was
+  // measured from actual pixels, just not a calibrated physical sample.
+  'estimated_from_chart',
 ];
 
 // Where the shade's *metadata* (that it exists, its name/code) was sourced
@@ -38,6 +43,10 @@ const SOURCE_TYPE_VALUES = [
   'official_shade_chart',
   'brand_website',
   'estimated',
+  // Part 9 — the shade was created via the AI/CV shade-chart import flow
+  // (ml-service/app/shade_chart + server/src/services/foundationImportService),
+  // reviewed and confirmed by an artist before being saved.
+  'shade_chart',
 ];
 
 module.exports = {

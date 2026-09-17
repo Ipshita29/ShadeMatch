@@ -89,8 +89,15 @@ function Foundations() {
 
   return (
     <div>
-      <h1 className={styles.title}>Foundation Library</h1>
-      <p className={styles.subtitle}>Browse the brands and shade ranges available for matching.</p>
+      <div className={styles.headerRow}>
+        <div>
+          <h1 className={styles.title}>Foundation Library</h1>
+          <p className={styles.subtitle}>Browse the brands and shade ranges available for matching.</p>
+        </div>
+        <Button to="/foundations/import" variant="secondary">
+          Add Shade Chart
+        </Button>
+      </div>
 
       <div className={styles.search}>
         <input
