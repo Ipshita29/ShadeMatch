@@ -1,0 +1,48 @@
+# Render "Blueprint" — deploys server/ and ml-service/ together.
+# See docs/deployment.md for the full manual steps (Vercel frontend,
+# MongoDB Atlas, Cloudinary and OpenAI credentials aren't provisioned by
+# this file and must be set as environment variables in the Render
+# dashboard after the first deploy).
+services:
+  - type: web
+    name: shadematch-server
+    runtime: node
+    rootDir: server
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /api/health
+    envVars:
+      - key: PORT
+        value: 5000
+      - key: MONGO_URI
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: CLIENT_URL
+        sync: false
+      - key: ML_SERVICE_URL
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: OPENAI_VISION_MODEL
+        sync: false
+      - key: CLOUDINARY_CLOUD_NAME
+        sync: false
+      - key: CLOUDINARY_API_KEY
+        sync: false
+      - key: CLOUDINARY_API_SECRET
+        sync: false
+
+  - type: web
+    name: shadematch-ml-service
+    runtime: docker
+    rootDir: ml-service
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /health
+    envVars:
+      - key: HOST
+        value: 0.0.0.0
+      - key: PORT
+        value: 8000
+      - key: CLIENT_URL
+        sync: false

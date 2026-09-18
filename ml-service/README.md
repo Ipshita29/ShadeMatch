@@ -6,14 +6,19 @@ detection, skin profile generation, and foundation shade matching logic.
 
 ## Status
 
-Part 5 — skin profile engine. Given a client photo URL, the service detects
-the face (Part 4), samples/filters pixels from the forehead and both cheeks,
-and now also converts those measurements into a structured skin profile:
-depth, undertone, hue, a representative Lab/RGB color, and heuristic
-confidence/quality indicators (Part 5). This is a transparent CIE Lab
-color-science heuristic, documented and configurable — **not** a trained ML
-model (see "Scientific limitations" below) — and it does **not** yet touch
-foundation shades or matching, which are Part 6/7.
+Given a client photo URL, the service detects the face (Part 4),
+samples/filters pixels from the forehead and both cheeks, and converts
+those measurements into a structured skin profile: depth, undertone, hue, a
+representative Lab/RGB color, and heuristic confidence/quality indicators
+(Part 5). This is a transparent CIE Lab color-science heuristic, documented
+and configurable — **not** a trained ML model (see "Scientific limitations"
+below).
+
+It also runs the deterministic foundation-shade matching engine (Part 7 —
+see [`../docs/matching-engine.md`](../docs/matching-engine.md) for the full
+algorithm) and the computer-vision half of shade-chart import (Part 9 —
+swatch color estimation only; AI label extraction happens on the Node
+server, never here — see [`../docs/architecture.md`](../docs/architecture.md)).
 
 ## Setup
 
@@ -64,6 +69,17 @@ docker run --rm -p 8000:8000 -e CLIENT_URL=http://localhost:5173 shadematch-ml-s
   extraction (see below)
 - `POST /analyze/skin-profile` — Part 5: the same extraction, converted into
   a structured skin profile (see below)
+- `POST /match` — Part 7: deterministic shade matching. Takes a skin
+  profile and a list of candidate shades (Node fetches both from MongoDB
+  and forwards them — this endpoint never queries the database itself) and
+  returns a ranked top-3 with a full score breakdown and reasons. See
+  [`../docs/matching-engine.md`](../docs/matching-engine.md) for the
+  algorithm.
+- `POST /shade-chart/extract-colors` — Part 9: given a shade-chart image
+  URL, locates candidate swatch regions and estimates each one's color
+  (RGB + Lab) via OpenCV. Pure computer vision — no AI, no MongoDB, no
+  knowledge of shade names/brands (that's a separate call Node makes to
+  OpenAI). See `app/shade_chart/`.
 
 ### `POST /analyze/skin-regions`
 
@@ -208,11 +224,15 @@ source venv/bin/activate
 pytest tests/ -v
 ```
 
-`tests/fixtures/skin_profile_fixtures.py` has synthetic (not real-person)
-Lab/RGB inputs for depth/undertone/hue boundaries, ambiguous cases,
-inconsistent regions, low pixel counts and poor-quality photos, so the
-classification logic in `skin_profile.py` can be exercised without
-repeatedly uploading real photos.
+Every test uses synthetic, programmatically-generated images/fixtures —
+never real photos or real OpenAI calls. Face detection (MediaPipe) is
+mocked in `test_skin_api.py` rather than exercised for real, since it's
+known to crash natively on some macOS setups (see the Docker note above);
+everything downstream of detection (region selection, pixel sampling,
+quality assessment, classification) runs for real against real synthetic
+images. `test_shade_chart.py` builds synthetic chart images (drawn
+rectangles) to verify swatch detection/sampling/color extraction.
+`test_matching.py` covers the Part 7 scoring/ranking/tie-breaking logic.
 
 ## Scientific limitations
 
@@ -234,25 +254,43 @@ ml-service/
 ├── app/
 │   ├── api/
 │   │   ├── health.py
-│   │   └── skin.py            # POST /analyze/skin-regions, /analyze/skin-profile
+│   │   ├── skin.py            # POST /analyze/skin-regions, /analyze/skin-profile
+│   │   ├── match.py           # POST /match (Part 7)
+│   │   └── shade_chart.py     # POST /shade-chart/extract-colors (Part 9)
 │   ├── core/
-│   │   └── config.py          # all Part 4 + Part 5 calibration constants
+│   │   └── config.py          # all Part 4/5/7 calibration constants, in one documented place
 │   ├── models/
-│   │   ├── skin.py            # request schema
-│   │   └── skin_profile.py    # Part 5 response schema
+│   │   ├── skin.py
+│   │   ├── skin_profile.py
+│   │   ├── matching.py
+│   │   └── shade_chart.py
 │   ├── services/
 │   │   ├── face_detector.py
 │   │   ├── skin_region_extractor.py
 │   │   ├── pixel_sampler.py
 │   │   ├── image_quality.py
-│   │   └── skin_profile.py    # Part 5 classification engine
+│   │   ├── skin_profile.py            # Part 5 classification engine
+│   │   ├── color_matching.py          # Part 7 — CIEDE2000 Delta E
+│   │   ├── depth_matching.py          # Part 7
+│   │   ├── undertone_matching.py      # Part 7
+│   │   ├── hue_matching.py            # Part 7
+│   │   ├── scoring.py                 # Part 7 — weighted score, reasons, ranking
+│   │   └── matching_engine.py         # Part 7 — top-level orchestrator + guardrails
+│   ├── shade_chart/                    # Part 9 — CV pipeline, no AI/MongoDB
+│   │   ├── swatch_detector.py
+│   │   ├── swatch_sampler.py
+│   │   ├── shade_color_extractor.py
+│   │   └── chart_parser.py
 │   ├── utils/
 │   │   ├── image_utils.py
-│   │   └── color_utils.py
+│   │   └── color_utils.py             # the one RGB<->Lab<->LCh conversion used everywhere
 │   └── main.py
 ├── tests/
-│   ├── fixtures/skin_profile_fixtures.py
-│   └── test_skin_profile.py
+│   ├── fixtures/
+│   ├── test_skin_profile.py
+│   ├── test_skin_api.py               # full-pipeline tests with face detection mocked
+│   ├── test_matching.py
+│   └── test_shade_chart.py
 ├── Dockerfile
 ├── requirements.txt
 └── .env.example

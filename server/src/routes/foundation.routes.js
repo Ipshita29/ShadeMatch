@@ -1,5 +1,6 @@
 const express = require('express');
 const upload = require('../middleware/upload');
+const { chartExtractionLimiter } = require('../middleware/rateLimit');
 const {
   listFoundations,
   listBrands,
@@ -25,7 +26,7 @@ router.get('/shades', listShades);
 // Part 9 — shade chart import. /import-chart returns a reviewable draft
 // only; /import-shades is the separate, explicit confirmation that writes
 // to MongoDB (see foundationImport.controller.js).
-router.post('/import-chart', upload.single('chart'), importChart);
+router.post('/import-chart', chartExtractionLimiter, upload.single('chart'), importChart);
 router.post('/import-shades', importShades);
 
 router.get('/', listFoundations);

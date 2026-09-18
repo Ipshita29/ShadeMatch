@@ -19,6 +19,14 @@ function errorHandler(err, req, res, next) {
     return res.status(400).json({ success: false, message });
   }
 
+  // express.json() throws a raw SyntaxError (with body-parser's engine
+  // message, e.g. "Expected property name or '}' in JSON at position 1")
+  // for a malformed request body — that message is an implementation
+  // detail, not something to show a user.
+  if (err.type === 'entity.parse.failed') {
+    return res.status(400).json({ success: false, message: 'The request body is not valid JSON.' });
+  }
+
   res.status(err.status || 500).json({
     success: false,
     message: err.status ? err.message : 'Internal server error',

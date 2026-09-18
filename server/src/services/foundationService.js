@@ -1,4 +1,5 @@
 const { DEPTH_VALUES, UNDERTONE_VALUES, HUE_VALUES } = require('../constants/foundationEnums');
+const { escapeRegex } = require('../utils/regex');
 
 // Builds a Mongoose filter object for GET /api/foundations/shades from
 // query params. Kept in one place so every route that lists shades filters
@@ -24,10 +25,6 @@ function buildShadeFilter(query) {
   }
 
   return filter;
-}
-
-function escapeRegex(value) {
-  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
 module.exports = { buildShadeFilter };

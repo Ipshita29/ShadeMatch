@@ -96,6 +96,35 @@ describe('Foundation API', () => {
     assert.strictEqual(res.body.pagination.total, 0);
   });
 
+  // Regression: ?brand=/?product= used to be passed straight into `new
+  // RegExp(...)` unescaped, so regex special characters (and a
+  // catastrophic-backtracking pattern) either broke the query or could hang
+  // the process. These must return a clean, fast 200 with no matches.
+  test('a ?brand= value containing regex special characters does not error or hang', async () => {
+    const res = await request(app).get('/api/foundations/shades').query({ brand: 'MAC(' });
+    assert.strictEqual(res.status, 200);
+    assert.deepStrictEqual(res.body.data, []);
+  });
+
+  test('a pathological ?brand= regex pattern resolves quickly rather than hanging (ReDoS)', async () => {
+    const start = Date.now();
+    const res = await request(app).get('/api/foundations/shades').query({ brand: '(a+)+$' });
+    assert.strictEqual(res.status, 200);
+    assert.ok(Date.now() - start < 2000, 'query should resolve well under a ReDoS timescale');
+  });
+
+  test('GET /api/foundations?brand= with regex special characters does not error', async () => {
+    const res = await request(app).get('/api/foundations').query({ brand: 'MAC[' });
+    assert.strictEqual(res.status, 200);
+    assert.deepStrictEqual(res.body.data, []);
+  });
+
+  test('GET /api/foundations/search?q= with regex special characters does not error', async () => {
+    const res = await request(app).get('/api/foundations/search').query({ q: 'NC40(' });
+    assert.strictEqual(res.status, 200);
+    assert.deepStrictEqual(res.body.data, []);
+  });
+
   test('GET /api/foundations/search?q=NC40 finds the shade by code', async () => {
     const res = await request(app).get('/api/foundations/search?q=NC40');
     assert.strictEqual(res.status, 200);

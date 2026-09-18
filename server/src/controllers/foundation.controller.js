@@ -4,6 +4,7 @@ const FoundationProduct = require('../models/FoundationProduct');
 const FoundationShade = require('../models/FoundationShade');
 const { buildShadeFilter } = require('../services/foundationService');
 const { parsePagination, buildPaginationMeta } = require('../utils/pagination');
+const { escapeRegex } = require('../utils/regex');
 
 function invalidId(label) {
   const error = new Error(`Invalid ${label} id.`);
@@ -24,7 +25,7 @@ async function listFoundations(req, res, next) {
   try {
     const filter = { isActive: true };
     if (req.query.brand) {
-      const brand = await Brand.findOne({ name: new RegExp(`^${req.query.brand}$`, 'i') });
+      const brand = await Brand.findOne({ name: new RegExp(`^${escapeRegex(req.query.brand)}$`, 'i') });
       filter.brand = brand ? brand._id : null; // null -> no results, rather than ignoring the filter
     }
 
@@ -142,10 +143,6 @@ async function searchFoundations(req, res, next) {
   } catch (error) {
     next(error);
   }
-}
-
-function escapeRegex(value) {
-  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
 module.exports = {

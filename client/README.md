@@ -1,4 +1,9 @@
-# React + Vite
+# ShadeMatch client
+
+The React/Vite frontend for ShadeMatch. See the [repo-level README](../README.md)
+for project context, environment setup and how to run the full stack.
+
+---
 
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 
